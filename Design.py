@@ -17,7 +17,7 @@ class CarScannerApp:
         self.app_icon = PhotoImage(file="assets/frame0/CarIcon.png")
         self.window.title("CarScanner")
         self.window.iconphoto(False, self.app_icon)
-
+        self.window.geometry("+{}+{}".format(0, 0))
         self.canvas = Canvas(
             self.window,
             bg="black",
@@ -28,14 +28,14 @@ class CarScannerApp:
             relief="ridge"
         )
         self.canvas.place(x=0, y=0)
-        self.suez_one_font = Font(family="Suez One", size=17)
+        self.suez_one_font = Font(family="Arial Bold Italic", size=17)
         self.background_image = PhotoImage(file=relative_to_assets("Background.png"))
         self.canvas.create_image(0, 0, image=self.background_image, anchor="nw")
 
         # ENTRY CAR NUMBER TXT
         self.canvas.create_text(
             427.0,
-            16.0,
+            18.0,
             anchor="nw",
             text=":הכנס מספר רכב ",
             fill="#FFFFFF",
@@ -44,7 +44,7 @@ class CarScannerApp:
         # ENTRY WHATSAPP NUMBER TXT
         self.canvas.create_text(
             317.0,
-            878.5,
+            881.5,
             anchor="nw",
             text=":שלח הודעת ווצאפ למספר",
             fill="#FFFFFF",
@@ -146,12 +146,12 @@ class CarScannerApp:
             width=216.0,
             height=33.08108139038086
         )
-
+        #MID LINE
         self.canvas.create_rectangle(
             298.9999999431105,
             125.0,
             300.0,
-            425.0,
+            469.0,
             fill="#FFFFFF",
             outline=""
         )
@@ -206,7 +206,7 @@ class CarScannerApp:
             anchor="nw",
             text="היישום הנוכחי אינו קשור או אחראי למידע המוצג בו. כל הפרטים והמידע המסופקים באפליקציה מקורם מתוך מקורות\n ,אינטרנטיים שונים, ואחריות השימוש בהם חלה על המשתמש בלבד. אין לראות במידע המוצג ייעוץ מקצועי או מחייב \n.וכל בעיה או נזק שעלול להיגרם כתוצאה מהשימוש במידע זה היא באחריות המשתמש",
             fill="#FFFFFF",
-            font=("Suez One", 9),
+            font=("Arial Italic", 9),
             justify="center"
         )
 
