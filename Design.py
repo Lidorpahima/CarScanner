@@ -27,6 +27,7 @@ class CarScannerApp:
             highlightthickness=0,
             relief="ridge"
         )
+        self.button_manager = ButtonManager(self.canvas)
         self.canvas.place(x=0, y=0)
         self.suez_one_font = Font(family="Arial Bold Italic", size=17)
         self.background_image = PhotoImage(file=relative_to_assets("Background.png"))
@@ -70,7 +71,6 @@ class CarScannerApp:
             fill="#FFFFFF",
             outline=""
         )
-
         # SEARCH BUTTON
         self.button_image_1 = PhotoImage(file=relative_to_assets("Search.png"))
         self.search_button = Button(
@@ -78,7 +78,7 @@ class CarScannerApp:
             image=self.button_image_1,
             borderwidth=0,
             highlightthickness=0,
-            command=lambda: ButtonManager.Display_Car_Details(self,self.entry_carNumber.get(), self.canvas),
+            command=lambda: self.button_manager.Display_Car_Details(self.entry_carNumber.get(), self.canvas),  # תיקון
             relief="flat",
             bg="grey19",
             activebackground="grey19"
