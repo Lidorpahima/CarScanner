@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    <h1>CarScanner 🇮🇱 ~Still In Develop~</h1>
+    <h1>CarScanner 🇮🇱 ~Working but Still In Develop! :)~</h1>
     <p><strong>CarScanner</strong> is a software tool that allows you to search for vehicle details by license plate number. The interface displays car details, enables WhatsApp message sending, and presents the information in an easy-to-read graphical interface.</p>
     <h2>Important</h2>
     <p><strong>This application is designed to work only in Israel.</strong></p>
