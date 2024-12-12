@@ -3,17 +3,19 @@ from pathlib import Path
 from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, Toplevel, Label, messagebox
 from tkinter.font import Font
 import os
-
 import bs4
 import requests
 from bs4 import BeautifulSoup
 
 
 class ButtonManager:
-    def __init__(self):
-        self.canvas = Canvas(self.window, bg="black", height=1000, width=600)
-        self.canvas.place(x=0, y=0)
-
+    def __init__(self, canvas):
+        self.canvas = canvas
+        self.text_items = []
+    def clear_canvas(self):
+        for text_id in self.text_items:
+            self.canvas.delete(text_id)
+        self.text_items = []
     def WrongNumber(number):
         print(f"Wrong number: {number}")
 
@@ -60,7 +62,13 @@ class ButtonManager:
             fill="White",
             justify="center"
         )
+    def clear_text(self):
+        for text_id in self.text_items:
+            self.canvas.delete(text_id)
+        self.text_items = []
     def Display_Car_Details(self, entry_carNumber, canvas):
+        self.clear_text()
+        count = 35
         car_number = entry_carNumber
         if not car_number :
             print("Please enter a valid number")
@@ -85,14 +93,16 @@ class ButtonManager:
             messagebox.showerror("שגיאה", "לא קיים מספר רכב כזה במערכת")
             return
 
-        url = f"https://meshumeshet.com/c/{car_number}"  # לדוגמה בלבד
+        url = f"https://meshumeshet.com/c/{car_number}"
 
-        canvas.create_text(515.0,112.0,anchor="nw",text=":פרטי רכב",fill="#FFFFFF", font=suez_one_font_)
-        canvas.create_text(203.0,111.0,anchor="nw",text=":מידע נוסף",fill="#FFFFFF",font=suez_one_font_)
+        text_id = canvas.create_text(515.0,112.0,anchor="nw",text=":פרטי רכב",fill="#FFFFFF", font=suez_one_font_)
+        self.text_items.append(text_id)
+        text_id = canvas.create_text(203.0,111.0,anchor="nw",text=":מידע נוסף",fill="#FFFFFF",font=suez_one_font_)
+        self.text_items.append(text_id)
 
         response = requests.get(url)
         response.raise_for_status()
-        ##
+        ## WILL BE USED LATER FOR HISTORY STILL IN DEVELOPMENT FOR NEXT UPDATE
         '''''
         SAVE_FOLDER = "assets/Downloaded"
         if not os.path.exists(SAVE_FOLDER):
@@ -129,9 +139,10 @@ class ButtonManager:
 
         for item in data_list:
             text = f"{item[1]}  :\u200e{item[0]}"
-            canvas.create_text(posX, posY, anchor="ne", text=text, fill="#FFFFFF", font=suez_one_font_Small)
-            posY += 20  # רווח בין השורות
-
+            text_id =canvas.create_text(posX, posY, anchor="ne", text=text, fill="#FFFFFF", font=suez_one_font_Small)
+            count -=1
+            self.text_items.append(text_id)
+            posY += 20
         for li in soup.find_all('li'):
             question = li.find('b')
             if question:
@@ -143,12 +154,16 @@ class ButtonManager:
 
         for item in info_list:
             text = f"{item[1]}  :\u200e{item[0]}"
-            canvas.create_text(posX, posY, anchor="ne", text=text, fill="#FFFFFF", font=suez_one_font_Small)
+            text_id= canvas.create_text(posX, posY, anchor="ne", text=text, fill="#FFFFFF", font=suez_one_font_Small)
+            count -=1
+            if count == 0 :
+                break
+            self.text_items.append(text_id)
             if posY >= 459:
                 posY = 132
                 posX = 283
             else:
-                posY += 20  # רווח בין השורות
+                posY += 20
         posY = 500
         posX = 585
 
@@ -156,30 +171,26 @@ class ButtonManager:
         relevant_data = []
 
         for row in rows:
-            cells = row.find_all('td')  # קבלת כל ה-TD בשורה
-            if not cells:  # אם השורה ריקה, ממשיכים
+            cells = row.find_all('td')
+            if not cells:
                 continue
 
-            # בדיקת אורך הטקסט בכל תא
             for cell in cells:
                 text = cell.get_text(strip=True)
-                if len(text) > 20:  # אם יש טקסט ארוך מ-20 תווים
+                if len(text) > 20:
                     break
             else:
-                # אם לא נשברנו, מוסיפים את השורה
                 relevant_data.append([cell.get_text(strip=True) for cell in cells])
                 continue
-            break  # שבירת הלולאה הראשית אם נמצא טקסט ארוך מ-20 תווים
+            break
 
-        print("Filtered relevant data:", relevant_data)
-        # הדפסת הנתונים הרלוונטיים
         for item in relevant_data:
             text = f"בעלות {item[2]} {item[1]} :\u200e{item[0]} "
-            canvas.create_text(posX, posY, anchor="ne", text=text, fill="#FFFFFF", font=suez_one_font_Small)
+            text_id = canvas.create_text(posX, posY, anchor="ne", text=text, fill="#FFFFFF", font=suez_one_font_Small)
+            self.text_items.append(text_id)
             if posY >= 700:
                 posY = 500
                 posX = 283
             else:
                 posY += 20
-
 
