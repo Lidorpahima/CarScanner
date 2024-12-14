@@ -29,7 +29,7 @@ class ButtonManager:
                 agra = 1046
             elif yearsOnRoad < 10:
                 agra = 917
-            elif yearsOnRoad > 10:
+            elif yearsOnRoad >= 10:
                 agra = 801
         elif AgraLevel == "2":
             if yearsOnRoad < 4:
@@ -38,7 +38,7 @@ class ButtonManager:
                 agra = 1325
             elif yearsOnRoad < 10:
                 agra = 1161
-            elif yearsOnRoad > 10:
+            elif yearsOnRoad >= 10:
                 agra = 1012
         elif AgraLevel == "3":
             if yearsOnRoad < 4:
@@ -47,7 +47,7 @@ class ButtonManager:
                 agra = 1602
             elif yearsOnRoad < 10:
                 agra = 1403
-            elif yearsOnRoad > 10:
+            elif yearsOnRoad >= 10:
                 agra = 1224
         elif AgraLevel == "4":
             if yearsOnRoad < 4:
@@ -56,7 +56,7 @@ class ButtonManager:
                 agra = 1857
             elif yearsOnRoad < 10:
                 agra = 1580
-            elif yearsOnRoad > 10:
+            elif yearsOnRoad >= 10:
                 agra = 1224
         elif AgraLevel == "5":
             if yearsOnRoad < 4:
@@ -65,7 +65,7 @@ class ButtonManager:
                 agra = 2061
             elif yearsOnRoad < 10:
                 agra = 1701
-            elif yearsOnRoad > 10:
+            elif yearsOnRoad >= 10:
                 agra = 1406
         elif AgraLevel == "6":
             if yearsOnRoad < 4:
@@ -74,7 +74,7 @@ class ButtonManager:
                 agra = 2664
             elif yearsOnRoad < 10:
                 agra = 1998
-            elif yearsOnRoad > 10:
+            elif yearsOnRoad >= 10:
                 agra = 1495
         elif AgraLevel == "7":
             if yearsOnRoad < 4:
@@ -83,7 +83,7 @@ class ButtonManager:
                 agra = 3542
             elif yearsOnRoad < 10:
                 agra = 2479
-            elif yearsOnRoad > 10:
+            elif yearsOnRoad >= 10:
                 agra = 1737
         return agra
     def AmountOfCars(self, ModelYear, degem,demgem_cd):
@@ -218,17 +218,17 @@ class ButtonManager:
                 response.raise_for_status()
                 records = response.json()["result"]["records"]
                 hands = []
-                handPos = -1
+                handPos = len(records)
+                handPosi = 0
                 for record in records:
+                    baalut = record.get("baalut", "לא זמין")
                     baalut_dt = record.get("baalut_dt", "לא זמין")
                     if(baalut_dt != "לא זמין"):
-                        int(baalut_dt)%10
-                        handPos = max(handPos, (int(baalut_dt)%10))
-                    hands.append(record.get("baalut", "לא זמין"))
-                if handPos == -1:
-                    handPos = "לא זמין"
-                else:
-                    handPos = "0"+str(handPos)
+                        baalut_dt =str(baalut_dt)
+                        baalutData = f"שינוי בעלות בתאריך: {baalut_dt[4:]}/{baalut_dt[5:]} {baalut}"
+                        handPos -= 1
+                        hands.append(baalutData)
+                        handPosi += 1
                 #~~~~~~~~~~~~~~~~~~~~~~~~~AmountOfCars~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 AmountOfCars = self.AmountOfCars(shnat_yitzur,degem_nm,degem_cd)
                 if AmountOfCars is not None:
@@ -250,7 +250,7 @@ class ButtonManager:
                 records = response.json()["result"]["records"]
                 if records:
                     for record in records:
-                        price = str(record.get("mehir", "לא זמין"))+ " ש\"ח"
+                        price = str(record.get("mehir", "לא זמין"))+ " ₪"
                         shem_yevuan = record.get("shem_yevuan", "לא זמין")
                 else:
                     price = "לא זמין"
@@ -319,7 +319,7 @@ class ButtonManager:
 
                         yearsOnRoad = datetime.now().year - shnat_yitzur
                         agra = self.agraCalculation(yearsOnRoad, kvuzat_agra_cd)
-
+                        agra = f"{str(agra)} ₪"
 
 
 
@@ -393,7 +393,7 @@ class ButtonManager:
                 self.text_items.append(canvas.create_text(590, 490, anchor="ne", text=":היסטורית בעלות", fill="#FFFFFF",
                                                           font=suez_one_font_))
                 posY += 20
-                self.text_items.append(canvas.create_text(590, posY, anchor="ne", text=f"יד: {handPos}", fill="#FFFFFF",font=suez_one_font_Small))
+                self.text_items.append(canvas.create_text(590, posY, anchor="ne", text=f"יד: {handPosi}", fill="#FFFFFF",font=suez_one_font_Small))
                 posY += 20
                 i = len(hands)-1
                 for hand in hands:
