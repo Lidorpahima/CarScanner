@@ -39,7 +39,7 @@
         <li>Testing and fixing bugs.</li>
     </ul>
     <h2>Screenshot</h2>
-    <img src="https://i.postimg.cc/2ywbyGNF/Screenshot.png" alt="CarScanner Image" style="max-width:50%; height:auto;">
+    <img src="https://i.ibb.co/GVXMkSp/image.png" alt="CarScanner Image" style="max-width:50%; height:auto;">
 
 </body>
 </html>
