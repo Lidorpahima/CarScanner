@@ -78,7 +78,7 @@ class CarScannerApp:
             image=self.button_image_1,
             borderwidth=0,
             highlightthickness=0,
-            command=lambda: self.button_manager.Display_Car_Details(self.entry_carNumber.get(), self.canvas),  # תיקון
+            command=lambda: self.button_manager.Display_Car_Details(self.entry_carNumber.get(), self.canvas,self.window),  # תיקון
             relief="flat",
             bg="grey19",
             activebackground="grey19"
@@ -116,7 +116,7 @@ class CarScannerApp:
             image=self.button_image_3,
             borderwidth=0,
             highlightthickness=0,
-            command=lambda: ButtonManager.open_about_window(),
+            command=lambda: ButtonManager.open_about_window(self.canvas),
             relief="flat",
             bg="grey19",
             activebackground="grey19"

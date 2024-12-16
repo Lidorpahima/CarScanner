@@ -1,21 +1,31 @@
+import threading
+import tkinter as tk
 import webbrowser
+
 from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, Toplevel, Label, messagebox
 from tkinter.font import Font
-import requests
 import json
 from datetime import datetime
 import requests
-from bs4 import BeautifulSoup
+import itertools
+from PIL import Image, ImageTk
+
+from assets.ImageSlider import ImageSlider
 
 
 class ButtonManager:
     def __init__(self, canvas):
         self.canvas = canvas
         self.text_items = []
-    def clear_canvas(self):
-        for text_id in self.text_items:
-            self.canvas.delete(text_id)
-        self.text_items = []
+        self.text_data = []
+        self.image_slider = None
+        self.loading_gif_frames = [tk.PhotoImage(file='assets/frame0/Loading.gif', format='gif -index %i' % i) for i in range(63)]
+        self.loading_gif = itertools.cycle(self.loading_gif_frames)
+        self.loading_item = None
+
+
+    def setImages(self,images):
+        self.image_slider = images
     def WrongNumber(self,number):
         messagebox.showerror("שגיאה", "לא קיים מספר רכב במערכת עבור מספר זה: "+number)
 
@@ -141,13 +151,24 @@ class ButtonManager:
                 print("non digit number appears")
                 messagebox.showerror("שגיאה", "מספר הטלפון יכול להכיל רק ספרות!")
                 return
-            URL = "https://wa.me/" +"+972"+ phone_number[1:10]
-            print(URL)
+            URL = f"https://wa.me/+972{phone_number[1:10]}/?text=שלום לגבי הרכב אשמח לדעת עוד פרטים"
             webbrowser.open(URL)
         except ValueError:
             print("Please enter a valid number")
 
-    def open_about_window():
+    def show_loading(self):
+        self.loading_item = self.canvas.create_image(70,300, anchor="nw", image=next(self.loading_gif))
+        self.animate_loading()
+    def hide_loading(self):
+        if self.loading_item:
+            self.canvas.delete(self.loading_item)
+            self.loading_item = None
+            self.canvas.update()
+    def animate_loading(self):
+        if self.loading_item:
+            self.canvas.itemconfig(self.loading_item, image=next(self.loading_gif))
+            self.canvas.after(100, self.animate_loading)
+    def open_about_window(self):
         global background_image
 
         about_window = Toplevel()
@@ -170,8 +191,26 @@ class ButtonManager:
         for text_id in self.text_items:
             self.canvas.delete(text_id)
         self.text_items = []
-    def Display_Car_Details(self, entry_carNumber, canvas):
-        self.clear_text()
+        print(self.image_slider)
+        self.image_slider.delete_images()
+
+    def animate_loading(self):
+        if self.loading_item:
+            self.canvas.itemconfig(self.loading_item, image=next(self.loading_gif))
+            self.canvas.after(100, self.animate_loading)
+    def display_text(self):
+        for item in self.text_data:
+            posX, posY, anchor, text, fill, font = item
+            self.text_items.append(self.canvas.create_text(posX, posY, anchor=anchor, text=text, fill=fill, font=font))
+        self.text_data = []
+
+    def Display_Car_Details(self, entry_carNumber, canvas,windows):
+        if self.image_slider:
+            self.clear_text()
+        self.show_loading()
+        thread = threading.Thread(target=self.get_car_details, args=(entry_carNumber,canvas,windows))
+        thread.start()
+    def get_car_details(self, entry_carNumber, canvas,window):
         #~~~~~~~~~~~~~~~~~~~~~~~~~API~~~~~~~~~~~~~~~~~~~~~~~~~~~
         base_url = "https://data.gov.il/api/3/action/datastore_search"
         resource_idInfo = "053cea08-09bc-40ec-8f7a-156f0677aff3"
@@ -180,7 +219,10 @@ class ButtonManager:
         resourse_Prices = "39f455bf-6db0-4926-859d-017f34eacbcb"
         resource_TavNeche = "c8b9f9c8-4612-4068-934f-d4acd2e3c06e"
         resourse_CarInfo = "142afde2-6228-49f9-8a29-9b6c3a0cbe40"
-
+#~~~~~~~~~~~~~~~~~~~~~~~~Font~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        suez_one_font_Small = Font(family="Segoe UI Bold", size=11)
+        suez_one_font_ = Font(family="Arial Bold Italic", size=13)
+        suez_one_font_Big = Font(family="Arial Bold Italic", size=16)
 #~~~~~~~~~~~~~~~~~~~~~~~~~CAR INFO~~~~~~~~~~~~~~~~~~~~~~~~~~~
         params={
             "resource_id": resource_idInfo,
@@ -208,7 +250,6 @@ class ButtonManager:
                     kvutzat_zihum = record.get("kvutzat_zihum", "לא זמין")
                     degem_nm = record.get("degem_nm", "לא זמין")
                     degem_cd = record.get("degem_cd", "לא זמין")
-
                 #~~~~~~~~~~~~~~~~~~~~~~~~~CAR HAND~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 params = {
                     "resource_id": resource_idOwn,
@@ -217,18 +258,27 @@ class ButtonManager:
                 response = requests.get(base_url, params=params)
                 response.raise_for_status()
                 records = response.json()["result"]["records"]
-                hands = []
-                handPos = len(records)
-                handPosi = 0
-                for record in records:
-                    baalut = record.get("baalut", "לא זמין")
-                    baalut_dt = record.get("baalut_dt", "לא זמין")
-                    if(baalut_dt != "לא זמין"):
-                        baalut_dt =str(baalut_dt)
-                        baalutData = f"שינוי בעלות בתאריך: {baalut_dt[4:]}/{baalut_dt[5:]} {baalut}"
-                        handPos -= 1
-                        hands.append(baalutData)
-                        handPosi += 1
+                i = 0
+                posY = 530
+                posX = 590
+                if records:
+                    for record in records:
+                        baalut = record.get("baalut", "לא זמין")
+                        baalut_dt = record.get("baalut_dt", "לא זמין")
+                        if(baalut_dt != "לא זמין"):
+                            baalut_dt =str(baalut_dt)
+                            baalutData = f"שינוי בעלות בתאריך: {baalut_dt[4:]}/{baalut_dt[:4]} - {baalut}"
+                            if baalut != "סוחר":
+                                self.text_data.append((posX, posY, "ne", f"\u200e{baalutData} (0{i})","#FFFFFF", suez_one_font_Small))
+                                if posY >= 600:
+                                    posY = 510
+                                    posX = posX - 290
+                                posY += 20
+                                i += 1
+                i = 0
+                if not records:
+                    self.text_data.append((590, posY, "ne", "לא זמין", "#FFFFFF",suez_one_font_Small))
+
                 #~~~~~~~~~~~~~~~~~~~~~~~~~AmountOfCars~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 AmountOfCars = self.AmountOfCars(shnat_yitzur,degem_nm,degem_cd)
                 if AmountOfCars is not None:
@@ -236,25 +286,7 @@ class ButtonManager:
                 else:
                     OnRoad = "לא זמין"
                     OffRoad = "לא זמין"
-                #~~~~~~~~~~~~~~~~~~~~~~~~~Prices~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                params = {
-                    "resource_id": resourse_Prices,
-                    "filters": json.dumps({
-                        "degem_nm": degem_nm,
-                        "shnat_yitzur": shnat_yitzur,
-                        "degem_cd": degem_cd
-                    })
-                }
-                response = requests.get(base_url, params=params)
-                response.raise_for_status()
-                records = response.json()["result"]["records"]
-                if records:
-                    for record in records:
-                        price = str(record.get("mehir", "לא זמין"))+ " ₪"
-                        shem_yevuan = record.get("shem_yevuan", "לא זמין")
-                else:
-                    price = "לא זמין"
-                    shem_yevuan = "לא זמין"
+
                 #~~~~~~~~~~~~~~~~~~~~~~~~~TavNeche~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 try:
 
@@ -290,13 +322,11 @@ class ButtonManager:
                     response = requests.get(base_url, params=params)
                     response.raise_for_status()
                     records = response.json()["result"]["records"]
-                    print(records)
                     if records:
                         for record in records:
                             kvuzat_agra_cd = record.get("kvuzat_agra_cd", "לא זמין")
                             nefah_manoa = record.get("nefah_manoa", "לא זמין")
                             mishkal_kolel = record.get("mishkal_kolel", "לא זמין")
-                            gova = record.get("gova", "לא זמין")
                             hanaa_nm = record.get("hanaa_nm", "לא זמין")
                             mazgan_ind = record.get("mazgan_ind", "לא זמין")
                             abs_ind = record.get("abs_ind", "לא זמין")
@@ -309,6 +339,7 @@ class ButtonManager:
                             kosher_grira_bli_blamim = record.get("kosher_grira_im_blamim", "לא זמין")
                             automatic_ind = record.get("automatic_ind", "לא זמין")
                             halon_bagg_ind = record.get("halon_bagg_ind", "לא זמין")
+
                         if abs_ind == 1:abs_ind = "V"
                         if automatic_ind == 1:automatic_ind = "V"
                         elif automatic_ind == 0 : automatic_ind = "X"
@@ -326,6 +357,38 @@ class ButtonManager:
                 except requests.exceptions.RequestException as err:
                     print(f"Error: {err}")
 
+                #~~~~~~~~~~~~~~~~~~~~~~~~~CarReview~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                base_url = f"https://autoboom.co.il/api/check_car/{entry_carNumber}"
+                try:
+                    params = {
+                        "resource_id": resourse_CarInfo,
+                        "translation": "he",
+                        "size[]": ["300x300", "200x200", "800x800", "1200x1200"]
+                    }
+
+                    response = requests.get(base_url, params=params)
+                    response.raise_for_status()
+                    data = response.json()
+                    carInfo  = []
+                    top_speed = data.get("success", {}).get("modification", {}).get("top_speed", {}).get("value","לא זמין")
+                    acceleration_to_100 =(data.get("success", {}).get("modification", {}).get("acceleration_to_100",{}).get("value", "לא זמין"))
+                    maximum_power_rpm =(data.get("success", {}).get("modification", {}).get("maximum_power_rpm",{}).get("value", "לא זמין"))
+                    fuel_tank_capacity = (data.get("success", {}).get("modification", {}).get("fuel_tank_capacity",{}).get("value", "לא זמין"))
+                    fuel_consumption_mixed = (data.get("success", {}).get("modification", {}).get("fuel_consumption_mixed",{}).get("value", "לא זמין"))
+                    records = response.json()["success"]["photos"]
+                    image_urls = []
+                    image_urlsBigger = []
+                    for record in records:
+                        if "300x300" in record and "1200x1200" in record:
+                            image_urls.append(record["300x300"]["url"])
+                            image_urlsBigger.append(record["1200x1200"]["url"])
+                    records = response.json()["success"]["vehicle"]
+                    rating = data.get("success", {}).get("body", {}).get("generation", {}).get("model", {}).get("rating", "לא זמין")
+                    review_count = data.get("success", {}).get("body", {}).get("generation", {}).get("model", {}).get("review_count", "לא זמין")
+                except requests.exceptions.RequestException as err:
+                    print(f"Error: {err}")
+                    car_review = "לא זמין"
+                #~~~~~~~~~~~~~~~~~~~~~~~~~Reviews~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
                 #~~~~~~~~~~~~~~~~~~~~~~~~~DisplayInfo~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 try:
@@ -345,12 +408,10 @@ class ButtonManager:
                     (":סוג דלק", sug_delek),
                     (":עלייה לכביש", moed_aliya_lakvish),
                     (":דגם", degem),
-                    (":קבוצת זיהום", kvutzat_zihum),
                     (":האם ירד מהכביש", "X"),
                     (":האם קיים ריקול (קריאת שירות)", "X"),
                     (":מספר הרכבים שעל הכביש", OnRoad),
                     (":מספר הרכבים שירדו מהכביש", OffRoad),
-                    (":עלות רכישה בשנת יצור", price),
                     (":תו נכה", tav_neche),
                     (":קבוצת אגרה", kvuzat_agra_cd),
                     (":אגרה שנתית", agra),
@@ -363,10 +424,12 @@ class ButtonManager:
                     (":מספר מושבים", mispar_moshavim),
                     (":כשר גרירה עם בלמים", kosher_grira_im_blamim),
                     (":כשר גרירה בלי בלמים", kosher_grira_bli_blamim),
-                    (":האם יש ABS", abs_ind),
-                    (":האם יש מזגן", mazgan_ind),
+                    (":הספק מירבי בסל''ד", maximum_power_rpm),
+                    (":תאוצה 0 ל-100 קמ''ש","שניות "+ str(acceleration_to_100) ),
+                    (":צריכת דלק משולבת", f"{str(float(100 / fuel_consumption_mixed).__round__(2))}ק''מ לליטר "),
                     (":תיבת הילוכים אוטומטית", automatic_ind),
-                    (":האם יש חלון בגג", halon_bagg_ind)
+                    (":קיבולת מיכל דלק","ליטר " +str(fuel_tank_capacity)),
+                    (":מהירות מרבית", top_speed)
 
                 ]
 
@@ -374,37 +437,48 @@ class ButtonManager:
                     {"resource_id": resourse_idAmount,"degem_nm": degem_nm},
                     {"resource_id": resource_idOwn, "q": entry_carNumber},
                 ]
-                suez_one_font_Small = Font(family="Segoe UI Bold", size=11)
-                suez_one_font_ = Font(family="Arial Bold Italic", size=13)
+
                 posX = 585
                 posY = 132
-                self.text_items.append(canvas.create_text(515.0, 112.0, anchor="nw", text=":פרטי רכב", fill="#FFFFFF",font=suez_one_font_))
-                self.text_items.append(canvas.create_text(197.0, 111.0, anchor="nw", text=":מידע נוסף", fill="#FFFFFF",font=suez_one_font_))
+                self.text_data.append((515.0, 112.0, "nw", ":פרטי רכב", "#FFFFFF",suez_one_font_))
+                self.text_data.append((197.0, 111.0, "nw", ":מידע נוסף", "#FFFFFF",suez_one_font_))
 
                 for label, value in car_info:
-                    self.text_items.append(canvas.create_text(posX, posY, anchor="ne", text=label, fill="#FFFFFF",font=suez_one_font_Small))
-                    self.text_items.append(canvas.create_text(posX -277, posY, anchor="nw", text=value, fill="#FFFFFF",font=suez_one_font_Small))
+                    self.text_data.append((posX, posY, "ne", label, "#FFFFFF",suez_one_font_Small))
+                    self.text_data.append((posX -277, posY,"nw",value, "#FFFFFF",suez_one_font_Small))
                     posY += 20
                     if posY >= 470:
                         posY= 132
                         posX = 295
-                posY =490
-                posX = 590
-                self.text_items.append(canvas.create_text(590, 490, anchor="ne", text=":היסטורית בעלות", fill="#FFFFFF",
-                                                          font=suez_one_font_))
-                posY += 20
-                self.text_items.append(canvas.create_text(590, posY, anchor="ne", text=f"יד: {handPosi}", fill="#FFFFFF",font=suez_one_font_Small))
-                posY += 20
-                i = len(hands)-1
-                for hand in hands:
 
-                    self.text_items.append(canvas.create_text(590, posY, anchor="ne", text=f"\u200e{hand} (0{i})", fill="#FFFFFF",font=suez_one_font_Small))
-                    posY += 20
-                    i -=1
+                self.text_data.append((590, 490,"ne", ":היסטורית בעלות", "#FFFFFF",suez_one_font_))
+                if rating >= 4:
+                    colorRating = "#36c316"
+                elif rating < 4:
+                    colorRating = "#fbc153"
+                elif rating < 2:
+                    colorRating = "#f02a2a"
+                self.text_data.append((140, 480, "ne", f"⭐{rating}({review_count})", colorRating,suez_one_font_Big))
+
+
+
+
+                self.text_data.append((590, 510, "ne",f"יד: {i}", "#FFFFFF",suez_one_font_Small))
+
+                posY = 700
+                for info in carInfo:
+                    self.text_data.append((500, posY, "ne",info , "#FFFFFF",suez_one_font_Big))
+                    posY +=40
             else:
                 self.WrongNumber(entry_carNumber)
+            #~~~~~~~~~~~~~~~~~~~~~~~~~ImageSlider~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+            slider = ImageSlider(window,canvas ,image_urls, image_urlsBigger)
+            self.setImages(slider)
+            self.hide_loading()
+            self.display_text()
+            #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
         except requests.exceptions.RequestException as err:
             print(f"Error: {err}")
-
+            self.hide_loading()
