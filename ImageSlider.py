@@ -22,11 +22,12 @@ class ImageSlider:
         self.show_image()
 
     def load_image_from_url(self, url):
-        """פונקציה להורדת התמונה מהאינטרנט"""
-        response = requests.get(url)
-        image_data = Image.open(BytesIO(response.content))
-        return image_data
-
+        try:
+            response = requests.get(url)
+            image_data = Image.open(BytesIO(response.content))
+            return image_data
+        except Exception as e:
+            print(f"Error loading image: {e}")
     def delete_images(self):
         for button in self.buttons:
             button.destroy()
@@ -36,8 +37,6 @@ class ImageSlider:
         self.images.clear()
 
     def show_image(self):
-        """הצגת התמונה הנוכחית ב-Canvas"""
-
         image_data = self.load_image_from_url(self.image_urls[self.current_index])
         self.original_image = ImageTk.PhotoImage(image_data)
 
@@ -46,29 +45,27 @@ class ImageSlider:
 
         self.current_image_id = self.canvas.create_image(300, 750, anchor="center", image=self.original_image)
         self.images.append(self.current_image_id)
-        # הוספת אירוע לחיצה על התמונה
         self.canvas.tag_bind(self.current_image_id, "<Button-1>", self.open_image_in_window)
 
     def previous_image(self):
-        """מעבר לתמונה הקודמת"""
+
         self.current_index = (self.current_index - 1) % len(self.image_urls)
         self.show_image()
 
     def next_image(self):
-        """מעבר לתמונה הבאה"""
+
         self.current_index = (self.current_index + 1) % len(self.image_urls)
         self.show_image()
 
     def open_image_in_window(self, event):
-        """הצגת התמונה בחלון בגודל 1200x1200"""
-        # יצירת חלון חדש בגודל קבוע
+
         image_window = tk.Toplevel(self.root)
         image_window.geometry("1200x850")
         image_window.geometry("+{}+{}".format(0, 0))
         image_window.title("תמונה בגודל מלא")
         image_window.configure(bg="grey19")
 
-        # טעינת התמונה מחדש
+
         image_data = self.load_image_from_url(self.image_urlsBigger[self.current_index])
         self.original_image_full = ImageTk.PhotoImage(image_data)
 
@@ -88,7 +85,7 @@ class ImageSlider:
         close_button.pack(pady=10)
 
     def change_image(self, image_window, direction):
-        """פונקציה לשינוי תמונה בחלון הגדול"""
+
         self.current_index = (self.current_index + direction) % len(self.image_urls)
         self.show_image()
         image_window.destroy()

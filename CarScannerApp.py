@@ -3,6 +3,7 @@ from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, Label
 from tkinter.font import Font
 from ButtonManager import ButtonManager
 
+
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path(r"assets\\frame0")
 
@@ -28,6 +29,7 @@ class CarScannerApp:
             relief="ridge"
         )
         self.button_manager = ButtonManager(self.canvas)
+
         self.canvas.place(x=0, y=0)
         self.suez_one_font = Font(family="Arial Bold Italic", size=17)
         self.background_image = PhotoImage(file=relative_to_assets("Background.png"))
@@ -97,7 +99,7 @@ class CarScannerApp:
             image=self.button_image_2,
             borderwidth=0,
             highlightthickness=0,
-            command=lambda: print("button_2 clicked"),
+            command=lambda: self.button_manager.HistoryWindow( self.window),
             relief="flat",
             bg="grey19",
             activebackground="grey19"
@@ -116,7 +118,7 @@ class CarScannerApp:
             image=self.button_image_3,
             borderwidth=0,
             highlightthickness=0,
-            command=lambda: ButtonManager.open_about_window(self.canvas),
+            command=lambda: self.button_manager.open_about_window(),
             relief="flat",
             bg="grey19",
             activebackground="grey19"

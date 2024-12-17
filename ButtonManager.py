@@ -1,4 +1,5 @@
 import threading
+import time
 import tkinter as tk
 import webbrowser
 
@@ -8,9 +9,8 @@ import json
 from datetime import datetime
 import requests
 import itertools
-from PIL import Image, ImageTk
 
-from assets.ImageSlider import ImageSlider
+from ImageSlider import ImageSlider
 
 
 class ButtonManager:
@@ -18,10 +18,16 @@ class ButtonManager:
         self.canvas = canvas
         self.text_items = []
         self.text_data = []
+        self.history = self.readHistory()
         self.image_slider = None
         self.loading_gif_frames = [tk.PhotoImage(file='assets/frame0/Loading.gif', format='gif -index %i' % i) for i in range(63)]
         self.loading_gif = itertools.cycle(self.loading_gif_frames)
         self.loading_item = None
+        self.verified_gif_frames = [tk.PhotoImage(file='assets/frame0/verified.gif', format='gif -index %i' % i) for i in range(73)]
+        self.verified_gif = itertools.cycle(self.verified_gif_frames)
+        self.verified_item = None
+
+
 
 
     def setImages(self,images):
@@ -157,17 +163,30 @@ class ButtonManager:
             print("Please enter a valid number")
 
     def show_loading(self):
-        self.loading_item = self.canvas.create_image(70,300, anchor="nw", image=next(self.loading_gif))
+        self.loading_item = self.canvas.create_image(65,300, anchor="nw", image=next(self.loading_gif))
         self.animate_loading()
+
+    def show_loadingVerified(self):
+        self.verified_item = self.canvas.create_image(100, 300, anchor="nw", image=next(self.verified_gif))
+        self.animate_Verified()
     def hide_loading(self):
         if self.loading_item:
             self.canvas.delete(self.loading_item)
             self.loading_item = None
             self.canvas.update()
+    def hide_loadingVerified(self):
+        if self.verified_item:
+            self.canvas.delete(self.verified_item)
+            self.verified_item = None
+            self.canvas.update()
     def animate_loading(self):
         if self.loading_item:
             self.canvas.itemconfig(self.loading_item, image=next(self.loading_gif))
             self.canvas.after(100, self.animate_loading)
+    def animate_Verified(self):
+        if self.verified_item:
+            self.canvas.itemconfig(self.verified_item, image=next(self.verified_gif))
+            self.canvas.after(100, self.animate_Verified)
     def open_about_window(self):
         global background_image
 
@@ -191,13 +210,16 @@ class ButtonManager:
         for text_id in self.text_items:
             self.canvas.delete(text_id)
         self.text_items = []
-        print(self.image_slider)
-        self.image_slider.delete_images()
+
 
     def animate_loading(self):
         if self.loading_item:
             self.canvas.itemconfig(self.loading_item, image=next(self.loading_gif))
             self.canvas.after(100, self.animate_loading)
+    def animate_Verified(self):
+        if self.verified_item:
+            self.canvas.itemconfig(self.verified_item, image=next(self.verified_gif))
+            self.canvas.after(100, self.animate_Verified)
     def display_text(self):
         for item in self.text_data:
             posX, posY, anchor, text, fill, font = item
@@ -205,11 +227,17 @@ class ButtonManager:
         self.text_data = []
 
     def Display_Car_Details(self, entry_carNumber, canvas,windows):
+        if not entry_carNumber or not entry_carNumber.isdigit() or len(entry_carNumber) < 6 or len(entry_carNumber) > 8:
+            messagebox.showerror("שגיאה", "בדוק את מספר הרכב שהזנת")
+            return
         if self.image_slider:
             self.clear_text()
+            self.image_slider.delete_images()
         self.show_loading()
+        self.saveHistory(entry_carNumber)
         thread = threading.Thread(target=self.get_car_details, args=(entry_carNumber,canvas,windows))
         thread.start()
+
     def get_car_details(self, entry_carNumber, canvas,window):
         #~~~~~~~~~~~~~~~~~~~~~~~~~API~~~~~~~~~~~~~~~~~~~~~~~~~~~
         base_url = "https://data.gov.il/api/3/action/datastore_search"
@@ -223,7 +251,11 @@ class ButtonManager:
         suez_one_font_Small = Font(family="Segoe UI Bold", size=11)
         suez_one_font_ = Font(family="Arial Bold Italic", size=13)
         suez_one_font_Big = Font(family="Arial Bold Italic", size=16)
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~HistorySaving~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~CAR INFO~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
         params={
             "resource_id": resource_idInfo,
             "q": entry_carNumber
@@ -275,7 +307,7 @@ class ButtonManager:
                                     posX = posX - 290
                                 posY += 20
                                 i += 1
-                i = 0
+
                 if not records:
                     self.text_data.append((590, posY, "ne", "לא זמין", "#FFFFFF",suez_one_font_Small))
 
@@ -375,19 +407,32 @@ class ButtonManager:
                     maximum_power_rpm =(data.get("success", {}).get("modification", {}).get("maximum_power_rpm",{}).get("value", "לא זמין"))
                     fuel_tank_capacity = (data.get("success", {}).get("modification", {}).get("fuel_tank_capacity",{}).get("value", "לא זמין"))
                     fuel_consumption_mixed = (data.get("success", {}).get("modification", {}).get("fuel_consumption_mixed",{}).get("value", "לא זמין"))
+                    if fuel_consumption_mixed is not None and fuel_consumption_mixed > 0:
+                        fuel_mixed = f"{(100 / fuel_consumption_mixed):.2f} ק''מ לליטר"
+                    else:
+                        fuel_mixed = "לא זמין"
+
                     records = response.json()["success"]["photos"]
                     image_urls = []
+                    rating = []
                     image_urlsBigger = []
                     for record in records:
                         if "300x300" in record and "1200x1200" in record:
                             image_urls.append(record["300x300"]["url"])
                             image_urlsBigger.append(record["1200x1200"]["url"])
                     records = response.json()["success"]["vehicle"]
-                    rating = data.get("success", {}).get("body", {}).get("generation", {}).get("model", {}).get("rating", "לא זמין")
-                    review_count = data.get("success", {}).get("body", {}).get("generation", {}).get("model", {}).get("review_count", "לא זמין")
+                    rating.append(data.get("success", {}).get("body", {}).get("rating", "לא זמין"))
+                    rating.append(data.get("success", {}).get("configuration", {}).get("rating", "לא זמין"))
+                    rating.append(data.get("success", {}).get("vehicle", {}).get("safety_rating", "לא זמין").get("value", "לא זמין"))
+                    rating.append(data.get("success", {}).get("body", {}).get("generation", "לא זמין").get("rating", "לא זמין"))
+                    print(rating)
+                    review_count = data.get("success", {}).get("body", {}).get("rating", {})
+
                 except requests.exceptions.RequestException as err:
                     print(f"Error: {err}")
                     car_review = "לא זמין"
+                    image_urls = []
+                    image_urlsBigger = []
                 #~~~~~~~~~~~~~~~~~~~~~~~~~Reviews~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
                 #~~~~~~~~~~~~~~~~~~~~~~~~~DisplayInfo~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -426,7 +471,7 @@ class ButtonManager:
                     (":כשר גרירה בלי בלמים", kosher_grira_bli_blamim),
                     (":הספק מירבי בסל''ד", maximum_power_rpm),
                     (":תאוצה 0 ל-100 קמ''ש","שניות "+ str(acceleration_to_100) ),
-                    (":צריכת דלק משולבת", f"{str(float(100 / fuel_consumption_mixed).__round__(2))}ק''מ לליטר "),
+                    (":צריכת דלק משולבת", fuel_mixed),
                     (":תיבת הילוכים אוטומטית", automatic_ind),
                     (":קיבולת מיכל דלק","ליטר " +str(fuel_tank_capacity)),
                     (":מהירות מרבית", top_speed)
@@ -451,7 +496,7 @@ class ButtonManager:
                         posY= 132
                         posX = 295
 
-                self.text_data.append((590, 490,"ne", ":היסטורית בעלות", "#FFFFFF",suez_one_font_))
+                ''''
                 if rating >= 4:
                     colorRating = "#36c316"
                 elif rating < 4:
@@ -459,26 +504,87 @@ class ButtonManager:
                 elif rating < 2:
                     colorRating = "#f02a2a"
                 self.text_data.append((140, 480, "ne", f"⭐{rating}({review_count})", colorRating,suez_one_font_Big))
+                '''
+                self.text_data.append((590, 490, "ne", ":היסטורית בעלות", "#FFFFFF", suez_one_font_))
+                self.text_data.append((590, 510, "ne",f"יד: 0{i}", "#FFFFFF",suez_one_font_Small))
 
-
-
-
-                self.text_data.append((590, 510, "ne",f"יד: {i}", "#FFFFFF",suez_one_font_Small))
-
+                i = 0
                 posY = 700
                 for info in carInfo:
                     self.text_data.append((500, posY, "ne",info , "#FFFFFF",suez_one_font_Big))
                     posY +=40
             else:
                 self.WrongNumber(entry_carNumber)
+                self.hide_loading()
+                return
             #~~~~~~~~~~~~~~~~~~~~~~~~~ImageSlider~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-            slider = ImageSlider(window,canvas ,image_urls, image_urlsBigger)
-            self.setImages(slider)
             self.hide_loading()
+            self.show_loadingVerified()
+            time.sleep(2)
+            slider = ImageSlider(window, canvas, image_urls, image_urlsBigger)
+            self.setImages(slider)
+            self.hide_loadingVerified()
             self.display_text()
+
             #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
         except requests.exceptions.RequestException as err:
             print(f"Error: {err}")
             self.hide_loading()
+
+    def HistoryWindow(self, window):
+        global background_image
+        try:
+
+            history_window = Toplevel()
+            history_window.resizable(False, False)
+            history_window.title("היסטוריה")
+            history_window.geometry("300x500")
+
+
+            canvas = Canvas(history_window, width=300, height=500)
+            canvas.pack(fill="both", expand=True)
+            background_image = PhotoImage(file="assets/frame0/Background-History.png")
+            canvas.create_image(0, 0, image=background_image, anchor="nw")
+            canvas.create_text(150, 30, text=":היסטורית חיפושים", font=("Segoe UI Bold", 12), fill="White",
+                               justify="center")
+
+            listbox = tk.Listbox(history_window, height=10, bg="grey19", fg="white",justify="center", font=("Segoe UI Bold", 12))
+            listbox.place(x=50, y=70, width=200)
+
+            for item in self.history:
+                listbox.insert(tk.END, item)
+
+
+            def on_select(event):
+                selected_index = listbox.curselection()
+                if selected_index:
+                    selected_item = listbox.get(selected_index)
+                    print(f"Selected: {selected_item}")
+                    self.Display_Car_Details(selected_item, self.canvas,window)
+                    history_window.destroy()
+
+            listbox.bind("<<ListboxSelect>>", on_select)
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
+    def saveHistory(self, carNumber):
+        try:
+            with open("History.txt", "a") as file:
+                if carNumber not in self.history:
+                    self.history.append(carNumber)
+                    file.write(carNumber + "\n")
+
+
+        except Exception as e:
+            print(f"Error saving history: {e}")
+
+    def readHistory(self):
+        try:
+            with open("History.txt", "r") as file:
+                lines = file.readlines()
+                return [line.strip() for line in lines]
+        except FileNotFoundError:
+            with open("History.txt", "w") as file:
+                return []
