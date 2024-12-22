@@ -247,6 +247,7 @@ class ButtonManager:
         resourse_Prices = "39f455bf-6db0-4926-859d-017f34eacbcb"
         resource_TavNeche = "c8b9f9c8-4612-4068-934f-d4acd2e3c06e"
         resourse_CarInfo = "142afde2-6228-49f9-8a29-9b6c3a0cbe40"
+        resourseLastKm = "56063a99-8a3e-4ff4-912e-5966c0279bad"
 #~~~~~~~~~~~~~~~~~~~~~~~~Font~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         suez_one_font_Small = Font(family="Segoe UI Bold", size=11)
         suez_one_font_Smallest = Font(family="Segoe UI Bold", size=8)
@@ -319,7 +320,25 @@ class ButtonManager:
                 else:
                     OnRoad = "לא זמין"
                     OffRoad = "לא זמין"
-
+                #~~~~~~~~~~~~~~~~~~~~~~~~~KmLastTest~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                try:
+                    params = {
+                        "resource_id": resourseLastKm,
+                        "q": entry_carNumber
+                    }
+                    response = requests.get(base_url, params=params)
+                    response.raise_for_status()
+                    records = response.json()["result"]["records"]
+                    if records:
+                        for record in records:
+                            kilometer_test_aharon = record.get("kilometer_test_aharon", "לא זמין")
+                            rishum_rishon_dt = record.get("rishum_rishon_dt", "לא זמין")
+                            if rishum_rishon_dt != "לא זמין":
+                                rishum_rishon_dt =str(rishum_rishon_dt)
+                                rishum_rishon_dt = f"עדכון אחרון בתאריך:  {rishum_rishon_dt[:11]} {kilometer_test_aharon} ק''מ"
+                                self.text_data.append((350, 480, "ne", f"\u200e{rishum_rishon_dt}","#FFFFFF", suez_one_font_))
+                except requests.exceptions.RequestException as err:
+                    print(f"Error: {err}")
                 #~~~~~~~~~~~~~~~~~~~~~~~~~TavNeche~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 try:
 
