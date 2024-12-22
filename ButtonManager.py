@@ -249,6 +249,7 @@ class ButtonManager:
         resourse_CarInfo = "142afde2-6228-49f9-8a29-9b6c3a0cbe40"
 #~~~~~~~~~~~~~~~~~~~~~~~~Font~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         suez_one_font_Small = Font(family="Segoe UI Bold", size=11)
+        suez_one_font_Smallest = Font(family="Segoe UI Bold", size=8)
         suez_one_font_ = Font(family="Arial Bold Italic", size=13)
         suez_one_font_Big = Font(family="Arial Bold Italic", size=16)
 
@@ -307,7 +308,7 @@ class ButtonManager:
                                     posX = posX - 290
                                 posY += 20
                                 i += 1
-
+                i-=1
                 if not records:
                     self.text_data.append((590, posY, "ne", "לא זמין", "#FFFFFF",suez_one_font_Small))
 
@@ -420,12 +421,15 @@ class ButtonManager:
                         if "300x300" in record and "1200x1200" in record:
                             image_urls.append(record["300x300"]["url"])
                             image_urlsBigger.append(record["1200x1200"]["url"])
+                    self.text_data.append((425, 855, "ne", " © Images provided by Autoboom. All rights reserved by their respective owners.", "#FFFFFF", suez_one_font_Smallest))
+
                     records = response.json()["success"]["vehicle"]
                     rating.append(data.get("success", {}).get("body", {}).get("rating", "לא זמין"))
                     rating.append(data.get("success", {}).get("configuration", {}).get("rating", "לא זמין"))
                     rating.append(data.get("success", {}).get("vehicle", {}).get("safety_rating", "לא זמין").get("value", "לא זמין"))
                     rating.append(data.get("success", {}).get("body", {}).get("generation", "לא זמין").get("rating", "לא זמין"))
-                    print(rating)
+
+
                     review_count = data.get("success", {}).get("body", {}).get("rating", {})
 
                 except requests.exceptions.RequestException as err:
@@ -434,7 +438,7 @@ class ButtonManager:
                     image_urls = []
                     image_urlsBigger = []
                 #~~~~~~~~~~~~~~~~~~~~~~~~~Reviews~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+                #SOONN
                 #~~~~~~~~~~~~~~~~~~~~~~~~~DisplayInfo~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 try:
                     shnat_yitzur = int(shnat_yitzur)

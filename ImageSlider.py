@@ -43,7 +43,7 @@ class ImageSlider:
         if hasattr(self, 'current_image_id'):
             self.canvas.delete(self.current_image_id)
 
-        self.current_image_id = self.canvas.create_image(300, 750, anchor="center", image=self.original_image)
+        self.current_image_id = self.canvas.create_image(300, 740, anchor="center", image=self.original_image)
         self.images.append(self.current_image_id)
         self.canvas.tag_bind(self.current_image_id, "<Button-1>", self.open_image_in_window)
 
