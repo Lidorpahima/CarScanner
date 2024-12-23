@@ -232,7 +232,7 @@ class ButtonManager:
             return
         if self.image_slider:
             self.clear_text()
-            self.image_slider.delete_images()
+            self.image_slider.reset_all()
         self.show_loading()
         self.saveHistory(entry_carNumber)
         thread = threading.Thread(target=self.get_car_details, args=(entry_carNumber,canvas,windows))
@@ -411,6 +411,7 @@ class ButtonManager:
 
                 #~~~~~~~~~~~~~~~~~~~~~~~~~CarReview~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 base_url = f"https://autoboom.co.il/api/check_car/{entry_carNumber}"
+
                 try:
                     params = {
                         "resource_id": resourse_CarInfo,
@@ -436,6 +437,7 @@ class ButtonManager:
                     image_urls = []
                     rating = []
                     image_urlsBigger = []
+
                     for record in records:
                         if "300x300" in record and "1200x1200" in record:
                             image_urls.append(record["300x300"]["url"])
@@ -545,6 +547,7 @@ class ButtonManager:
             self.hide_loading()
             self.show_loadingVerified()
             time.sleep(2)
+
             slider = ImageSlider(window, canvas, image_urls, image_urlsBigger)
             self.setImages(slider)
             self.hide_loadingVerified()
@@ -585,6 +588,7 @@ class ButtonManager:
                 if selected_index:
                     selected_item = listbox.get(selected_index)
                     print(f"Selected: {selected_item}")
+
                     self.Display_Car_Details(selected_item, self.canvas,window)
                     history_window.destroy()
 
