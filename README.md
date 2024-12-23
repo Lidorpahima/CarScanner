@@ -72,7 +72,7 @@
     </ul>
     <h2>Screenshot</h2>
     <p>Here is a screenshot of the application in action:</p>
-    <img src="https://i.postimg.cc/zDP5r2WW/image.png" alt="CarScanner Image" style="max-width:50%; height:auto; border: 1px solid #ddd; border-radius: 5px;">
+    <img src="https://i.postimg.cc/3NFWNhLj/image.png" alt="CarScanner Image" style="max-width:50%; height:auto; border: 1px solid #ddd; border-radius: 5px;">
 
 </body>
 </html>
