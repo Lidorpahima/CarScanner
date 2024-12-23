@@ -3,6 +3,7 @@ from PIL import Image, ImageTk
 import requests
 from io import BytesIO
 from tkinter import ttk
+
 class ImageSlider:
     def __init__(self, root, canvas, image_urls, image_urlsBigger):
         self.root = root
@@ -17,6 +18,7 @@ class ImageSlider:
         self.time_step = 100
         self.progress = 0
 
+        # עיצוב פס ההתקדמות
         self.style = ttk.Style(root)
         self.style.theme_use('default')
         self.style.configure("success.Striped.Horizontal.TProgressbar",
@@ -26,13 +28,13 @@ class ImageSlider:
                              lightcolor="red",
                              darkcolor="darkgreen")
 
-
-
+        # פס התקדמות
         self.progress_bar = ttk.Progressbar(root, orient="horizontal", mode="determinate", length=300,
                                             style="success.Striped.Horizontal.TProgressbar")
         self.progress_bar.place(x=300, y=840, anchor="center")
         self.progress_bar["maximum"] = self.remaining_time
 
+        # כפתורים
         self.left_button = tk.Button(root, text="⬅️", command=self.previous_image, bg="grey19", fg="#ffffff",
                                      font=("Arial", 16))
         self.left_button.place(x=117, y=740, anchor="center")
@@ -46,11 +48,9 @@ class ImageSlider:
         self.pause_button = tk.Button(root, text="⏯", command=self.toggle_auto_slide, bg="grey19", fg="#ffffff",
                                       font=("Arial", 16))
         self.pause_button.place(x=117, y=805, anchor="center")
-
-
+        self.buttons.append(self.pause_button)
 
         self.show_image()
-
         self.auto_slide()
 
     def load_image_from_url(self, url):
@@ -61,17 +61,43 @@ class ImageSlider:
         except Exception as e:
             print(f"Error loading image: {e}")
 
-    def delete_images(self):
-        for button in self.buttons:
-            button.destroy()
-        for image_id in self.images:
-            self.canvas.delete(image_id)
-        self.buttons.clear()
-        self.images.clear()
+    def reset_all(self):
+        try:
+            for button in self.buttons:
+                button.destroy()
+
+            for image_id in self.images:
+                self.canvas.delete(image_id)
+
+            self.buttons.clear()
+            self.images.clear()
+
+            if hasattr(self, 'image_objects'):
+                self.image_objects.clear()
+
+            self.image_urls.clear()
+            self.image_urlsBigger.clear()
+
+            self.current_index = 0
+
+            if hasattr(self, "progress_bar") and self.progress_bar.winfo_exists():
+                self.progress_bar.place_forget()
+                self.progress = 0
+                self.progress_bar["value"] = 0
+        except Exception as e:
+            print(f"Error resetting data: {e}")
 
     def show_image(self):
-        image_data = self.load_image_from_url(self.image_urls[self.current_index])
-        self.original_image = ImageTk.PhotoImage(image_data)
+        if not self.image_urls or self.current_index >= len(self.image_urls):
+            print("Error: No images to show")
+            return
+
+        try:
+            image_data = self.load_image_from_url(self.image_urls[self.current_index])
+            self.original_image = ImageTk.PhotoImage(image_data)
+        except Exception as e:
+            print(f"Error showing image: {e}")
+            return
 
         if hasattr(self, 'current_image_id'):
             self.canvas.delete(self.current_image_id)
@@ -81,11 +107,15 @@ class ImageSlider:
         self.canvas.tag_bind(self.current_image_id, "<Button-1>", self.open_image_in_window)
 
     def previous_image(self):
+        if not self.image_urls:
+            return
         self.reset_progress()
         self.current_index = (self.current_index - 1) % len(self.image_urls)
         self.show_image()
 
     def next_image(self):
+        if not self.image_urls:
+            return
         self.reset_progress()
         self.current_index = (self.current_index + 1) % len(self.image_urls)
         self.show_image()
@@ -121,18 +151,27 @@ class ImageSlider:
         self.open_image_in_window(None)
 
     def auto_slide(self):
-        if self.auto_slide_enabled:
-            if self.progress < self.remaining_time:
-                self.progress += self.time_step
+        if not self.auto_slide_enabled:
+            return
+
+        if not hasattr(self, "progress_bar") or not self.progress_bar.winfo_exists():
+            return
+
+        if self.progress < self.remaining_time:
+            self.progress += self.time_step
+            try:
                 self.progress_bar["value"] = self.progress
-                self.root.after(self.time_step, self.auto_slide)
-            else:
-                self.progress = 0
-                self.progress_bar["value"] = 0
-                self.next_image()
-                self.auto_slide()
+            except Exception as e:
+                print(f"Error updating progress bar: {e}")
+            self.root.after(self.time_step, self.auto_slide)
         else:
-            self.progress_bar.stop()
+            self.progress = 0
+            try:
+                self.progress_bar["value"] = 0
+            except Exception as e:
+                print(f"Error resetting progress bar: {e}")
+            self.next_image()
+            self.auto_slide()
 
     def toggle_auto_slide(self):
         self.auto_slide_enabled = not self.auto_slide_enabled
@@ -142,6 +181,14 @@ class ImageSlider:
         else:
             self.pause_button.config(text="❚❚")
             self.progress_bar.stop()
+
     def reset_progress(self):
         self.progress = 0
         self.progress_bar["value"] = 0
+
+    def load_new_car(self, new_image_urls, new_image_urlsBigger):
+        self.reset_all()
+        self.image_urls.extend(new_image_urls)
+        self.image_urlsBigger.extend(new_image_urlsBigger)
+        if self.image_urls:
+            self.show_image()
