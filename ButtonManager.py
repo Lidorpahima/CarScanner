@@ -520,6 +520,7 @@ class ButtonManager:
                         posX = 295
 
                 ''''
+                #New Version update soon
                 if rating >= 4:
                     colorRating = "#36c316"
                 elif rating < 4:

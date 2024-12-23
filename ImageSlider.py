@@ -20,17 +20,14 @@ class ImageSlider:
         self.style = ttk.Style(root)
         self.style.theme_use('default')
         self.style.configure("success.Striped.Horizontal.TProgressbar",
+                             thickness=5,
                              troughcolor="gray19",
-                             background="green",
-                             lightcolor="lime",
+                             background="red",
+                             lightcolor="red",
                              darkcolor="darkgreen")
-        self.style.layout("success.Striped.Horizontal.TProgressbar",
-                          [('Horizontal.Progressbar.trough',
-                            {'children': [('Horizontal.Progressbar.pbar', {'side': 'left', 'sticky': 'ns'})],
-                             'sticky': 'nswe'}),
-                           ('Horizontal.Progressbar.label', {'sticky': ''})])
 
-        # פס זרימה
+
+
         self.progress_bar = ttk.Progressbar(root, orient="horizontal", mode="determinate", length=300,
                                             style="success.Striped.Horizontal.TProgressbar")
         self.progress_bar.place(x=300, y=840, anchor="center")
@@ -84,10 +81,12 @@ class ImageSlider:
         self.canvas.tag_bind(self.current_image_id, "<Button-1>", self.open_image_in_window)
 
     def previous_image(self):
+        self.reset_progress()
         self.current_index = (self.current_index - 1) % len(self.image_urls)
         self.show_image()
 
     def next_image(self):
+        self.reset_progress()
         self.current_index = (self.current_index + 1) % len(self.image_urls)
         self.show_image()
 
@@ -143,3 +142,6 @@ class ImageSlider:
         else:
             self.pause_button.config(text="❚❚")
             self.progress_bar.stop()
+    def reset_progress(self):
+        self.progress = 0
+        self.progress_bar["value"] = 0
