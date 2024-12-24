@@ -42,7 +42,7 @@
     <ul>
         <li>Python 3.x</li>
         <li>Tkinter (usually included with Python installation)</li>
-        <li>Additional Libraries: <code>Pillow</code> (for image processing, if required), <code>requests</code> (if APIs are used)</li>
+        <li>Additional Libraries: <code>tkinter,pathlib,requests,PIL </code>
     </ul>
     <h2>How to Run the Application</h2>
     <ol>
