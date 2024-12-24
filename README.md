@@ -48,8 +48,8 @@
     <ol>
         <li>Ensure that you have Python 3 installed on your computer.</li>
         <li>Download all the files from the GitHub repository (or use <code>git clone</code>).</li>
-        <li>Run the <code>Design.py</code> file to start the application:</li>
-        <pre><code>python Design.py</code></pre>
+        <li>Run the <code>CarScannerApp.py</code> file to start the application:</li>
+        <pre><code>python CarScannerApp.py</code></pre>
     </ol>
     <h2>Project Structure</h2>
     <p>The project contains the following files and directories:</p>
